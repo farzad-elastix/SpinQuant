@@ -381,7 +381,7 @@ class WeightQuantizer(torch.nn.Module):
                 err = torch.sum(q, -1)
                 tmp = err < best
                 if torch.any(tmp):
-                    best[tmp] = err[tmp]
+                    best[tmp] = err[tmp].to(x.dtype)
                     self.scale[tmp] = scale1[tmp]
                     self.zero[tmp] = zero1[tmp]
 
