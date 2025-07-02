@@ -1,0 +1,26 @@
+[project]
+name = "spinquant"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "accelerate==0.34.2",
+    "datasets==2.20.0",
+    "lm-eval",
+    "mlflow[auth]>=3.1.1",
+    "sentencepiece>=0.2.0",
+    "simple-parsing>=0.1.7",
+    "tensorboardx>=2.6.4",
+    "torch>=2.7.1",
+    "transformers==4.44.2",
+]
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "pytest>=8.4.1",
+]
+
+[tool.uv.sources]
+lm-eval = { git = "https://github.com/EleutherAI/lm-evaluation-harness" }

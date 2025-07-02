@@ -5,6 +5,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+import os
 import datetime
 from logging import Logger
 
@@ -15,6 +16,7 @@ import transformers
 from eval_utils.main import ptq_model
 from eval_utils.modeling_llama import LlamaForCausalLM
 from utils import data_utils, eval_utils, utils
+from utils import quant_utils
 from utils.process_args import process_args_ptq
 
 log: Logger = utils.get_logger("spinquant")
@@ -74,6 +76,21 @@ def train() -> None:
 
     dataset_ppl = eval_utils.evaluator(model, testloader, utils.DEV, ptq_args)
     log.info("wiki2 ppl is: {}".format(dataset_ppl))
+
+    import pdb
+
+    pdb.set_trace()
+
+    layers = quant_utils.find_qlayers(model)
+    for path, layer in layers.items():
+        parent = model
+        *parent_path, final = path.split('.')
+        for k in parent_path:
+            parent = getattr(parent, k)
+        setattr(parent, final, layer.module)
+
+    model.save_pretrained(os.path.dirname(model_args.save_qmodel_path))
+
     dist.barrier()
 
 
