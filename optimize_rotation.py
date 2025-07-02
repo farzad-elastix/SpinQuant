@@ -7,6 +7,7 @@
 
 import datetime
 import os
+import safetensors.torch
 from logging import Logger
 
 import datasets
@@ -23,6 +24,7 @@ from utils.data_utils import CustomJsonDataset
 from utils.hadamard_utils import random_hadamard_matrix
 from utils.process_args import process_args_ptq
 from utils.utils import get_local_rank, get_logger, pt_fsdp_state_dict
+from utils import quant_utils
 
 log: Logger = get_logger("spinquant")
 
@@ -57,16 +59,18 @@ def train() -> None:
         config.tie_word_embeddings = False
         process_word_embeddings = True
     dtype = torch.bfloat16 if training_args.bf16 else torch.float16
-    model = LlamaForCausalLMQuant.from_pretrained(
+    model: LlamaForCausalLMQuant = LlamaForCausalLMQuant.from_pretrained(
         pretrained_model_name_or_path=model_args.input_model,
         config=config,
         torch_dtype=dtype,
         token=model_args.access_token,
     )
+    print('just loaded', model.model.layers[8].self_attn.v_proj.weight)
     if process_word_embeddings:
         model.lm_head.weight.data = model.model.embed_tokens.weight.data.clone()
 
     model = prepare_model(ptq_args, model)
+    print('after prepare_model', model.model.layers[8].self_attn.v_proj.weight)
     for param in model.parameters():
         param.requires_grad = False
     R1 = random_hadamard_matrix(model.config.hidden_size, "cuda")
@@ -112,6 +116,7 @@ def train() -> None:
     if training_args.fsdp != "" and training_args.fsdp != []:
         MyTrainer = FSDPTrainer
 
+    print('before trainer', model.model.layers[8].self_attn.v_proj.weight)
     trainer = MyTrainer(
         model=model,
         tokenizer=tokenizer,
@@ -137,10 +142,20 @@ def train() -> None:
     if local_rank == 0:
         os.makedirs(model_args.output_rotation_path, exist_ok=True)
         path = os.path.join(model_args.output_rotation_path, "R.bin")
-        torch.save(
-            R_dict,
-            path,
-        )
+        torch.save(R_dict, path)
+
+        layers = quant_utils.find_qlayers(model)
+        for path, layer in layers.items():
+            parent = model
+            *parent_path, final = path.split('.')
+            for k in parent_path:
+                parent = getattr(parent, k)
+            setattr(parent, final, layer.module)
+
+        # safetensors.torch.save_model(
+        #     model, os.path.join(model_args.output_rotation_path, "model.safetensors")
+        # )
+        model.save_pretrained(model_args.output_rotation_path)
     dist.barrier()
 
 
