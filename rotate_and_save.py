@@ -27,6 +27,9 @@ def rotate_and_save(args: RotateModelArgs):
         torch_dtype=dtype,
         device_map="auto" if torch.cuda.is_available() else None,
     )
+    if model.config.tie_word_embeddings:
+        model.config.tie_word_embeddings = False
+        model.lm_head.weight.data = model.model.embed_tokens.weight.data.clone()
     tokenizer = transformers.AutoTokenizer.from_pretrained(args.model)
     transformers.set_seed(args.seed)
     fuse_norm_utils.fuse_layer_norms(model)
