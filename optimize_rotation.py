@@ -65,12 +65,10 @@ def train() -> None:
         torch_dtype=dtype,
         token=model_args.access_token,
     )
-    print('just loaded', model.model.layers[8].self_attn.v_proj.weight)
     if process_word_embeddings:
         model.lm_head.weight.data = model.model.embed_tokens.weight.data.clone()
 
     model = prepare_model(ptq_args, model)
-    print('after prepare_model', model.model.layers[8].self_attn.v_proj.weight)
     for param in model.parameters():
         param.requires_grad = False
     R1 = random_hadamard_matrix(model.config.hidden_size, "cuda")
@@ -116,7 +114,6 @@ def train() -> None:
     if training_args.fsdp != "" and training_args.fsdp != []:
         MyTrainer = FSDPTrainer
 
-    print('before trainer', model.model.layers[8].self_attn.v_proj.weight)
     trainer = MyTrainer(
         model=model,
         tokenizer=tokenizer,

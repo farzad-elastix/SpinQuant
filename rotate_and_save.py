@@ -31,6 +31,8 @@ def rotate_and_save(args: RotateModelArgs):
     transformers.set_seed(args.seed)
     fuse_norm_utils.fuse_layer_norms(model)
     rotation_utils.rotate_model(model, args)
+    for param in model.parameters():
+        param.data = param.contiguous()
     model.save_pretrained(args.save_path)
     tokenizer.save_pretrained(args.save_path)
 
