@@ -75,6 +75,12 @@ def parser_gen():
         default=False,
         help="Apply Hadamard rotation in FP32 (default: False)",
     )
+    parser.add_argument(
+        "--apply_r4",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Apply R4 rotation to the weights of the MLP output layer.",
+    )
 
     # Activation Quantization Arguments
     parser.add_argument(

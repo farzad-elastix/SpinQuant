@@ -15,6 +15,7 @@ class RotateModelArgs:
     optimized_rotation_path: str = simple_parsing.field(alias="-o")
     save_path: str = simple_parsing.field(alias="-s")
     rotate_mode: str = "random"
+    apply_r4: bool = False
     bf16: bool = False
     seed: int = 0
 

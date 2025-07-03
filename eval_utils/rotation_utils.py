@@ -89,15 +89,16 @@ def rotate_mlp_input(layer, R1):
         W.weight.data = torch.matmul(W_, R1).to(device="cpu", dtype=dtype)
 
 
-def rotate_mlp_output(layer, R1):
+def rotate_mlp_output(layer, R1, apply_r4: bool = False):
     # Rotate the MLP output weights and bias.
     W = layer.mlp.down_proj
     dtype = W.weight.data.dtype
     W_ = W.weight.data.to(device="cuda", dtype=torch.float64)
     W.weight.data = torch.matmul(R1.T, W_).to(device="cpu", dtype=dtype)
-    apply_exact_had_to_linear(
-        W, had_dim=-1, output=False
-    )  # apply exact (inverse) hadamard on the weights of mlp output
+    if apply_r4:
+        apply_exact_had_to_linear(
+            W, had_dim=-1, output=False
+        )  # apply exact (inverse) hadamard on the weights of mlp output
     if W.bias is not None:
         b = W.bias.data.to(device="cuda", dtype=torch.float64)
         W.bias.data = torch.matmul(R1.T, b).to(device="cpu", dtype=dtype)
@@ -143,7 +144,7 @@ def rotate_model(model, args):
         rotate_attention_inputs(layers[idx], R1)
         rotate_attention_output(layers[idx], R1)
         rotate_mlp_input(layers[idx], R1)
-        rotate_mlp_output(layers[idx], R1)
+        rotate_mlp_output(layers[idx], R1, apply_r4=args.apply_r4)
         rotate_ov_proj(layers[idx], num_heads, head_dim, R2=R2)
 
 

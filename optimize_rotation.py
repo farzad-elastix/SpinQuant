@@ -156,6 +156,7 @@ def train() -> None:
         #     model, os.path.join(model_args.output_rotation_path, "model.safetensors")
         # )
         model.save_pretrained(model_args.output_rotation_path)
+        tokenizer.save_pretrained(model_args.output_rotation_path)
     dist.barrier()
 
 

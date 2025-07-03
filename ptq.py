@@ -23,12 +23,10 @@ log: Logger = utils.get_logger("spinquant")
 
 
 def train() -> None:
-    dist.init_process_group(backend="nccl", timeout=datetime.timedelta(hours=8))
     model_args, training_args, ptq_args = process_args_ptq()
     local_rank = utils.get_local_rank()
 
     log.info("the rank is {}".format(local_rank))
-    torch.distributed.barrier()
 
     config = transformers.AutoConfig.from_pretrained(
         model_args.input_model, token=model_args.access_token
@@ -89,9 +87,8 @@ def train() -> None:
             parent = getattr(parent, k)
         setattr(parent, final, layer.module)
 
-    model.save_pretrained(os.path.dirname(model_args.save_qmodel_path))
+    model.save_pretrained(os.path.join(os.path.dirname(args.save_qmodel_path), "ptq"))
 
-    dist.barrier()
 
 
 if __name__ == "__main__":

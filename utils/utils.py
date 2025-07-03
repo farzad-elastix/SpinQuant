@@ -15,7 +15,10 @@ from typing import Optional
 
 import numpy as np
 import torch
-from fast_hadamard_transform import hadamard_transform
+try:
+    from fast_hadamard_transform import hadamard_transform
+except ImportError:
+    hadamard_transform = None
 from torch.distributed.fsdp import (
     FullStateDictConfig,
 )
